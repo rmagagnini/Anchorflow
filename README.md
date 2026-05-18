@@ -56,8 +56,6 @@ resolve o resto.
 ## 🏗️ Arquitetura
 _______________________________________________________
 
-##Aplicação cliente
-
 
 ## ⚡ Início rápido
 
