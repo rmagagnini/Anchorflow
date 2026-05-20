@@ -75,6 +75,9 @@ async function main(): Promise<void> {
 
   // Step 4 — Polling
   console.log('[5/5] Polling transaction status (Ctrl+C to stop)...');
+  console.log('\n>>> COPIE A URL ACIMA E ABRA NO NAVEGADOR <<<');
+console.log('>>> Pressione Enter quando estiver pronto...');
+await new Promise(resolve => process.stdin.once('data', resolve));
   const result = await pollTransaction(config.transferServerSep24, token, deposit.id);
 
   console.log(`\nFinal status: ${result.status}`);

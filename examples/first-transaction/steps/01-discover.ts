@@ -1,42 +1,37 @@
-import axios from 'axios';
+﻿import axios from 'axios';
 
 export interface AnchorConfig {
   webAuthEndpoint: string;
   transferServerSep24: string;
   networkPassphrase: string;
-  currencies: Record<string, string>; // assetCode → issuer
+  currencies: Record<string, string>;
 }
 
 function extractTomlString(toml: string, key: string): string | undefined {
-  const match = new RegExp(`^${key}\\s*=\\s*"([^"]*)"`, 'm').exec(toml);
+  const match = new RegExp(String.raw`^${key}\s*=\s*"([^"]*)"`, 'm').exec(toml);
   return match?.[1];
 }
 
-function extractCurrencies(toml: string): Record<string, string> {
+export async function discoverAnchor(domain: string): Promise<AnchorConfig> {
+  const url = domain.startsWith('http')
+    ? `${domain}/.well-known/stellar.toml`
+    : `https://${domain}/.well-known/stellar.toml`;
+
+  const { data: toml } = await axios.get<string>(url);
+
+  const webAuthEndpoint = extractTomlString(toml, 'WEB_AUTH_ENDPOINT') ?? '';
+  const transferServerSep24 = extractTomlString(toml, 'TRANSFER_SERVER_SEP0024') ?? '';
+  const networkPassphrase = extractTomlString(toml, 'NETWORK_PASSPHRASE') ?? 'Test SDF Network ; September 2015';
+
+  console.log('  web_auth_endpoint    :', webAuthEndpoint);
+  console.log('  transfer_server_sep24:', transferServerSep24);
+
   const currencies: Record<string, string> = {};
-  for (const section of toml.split('[[CURRENCIES]]').slice(1)) {
-    const codeMatch = /^\s*code\s*=\s*"([^"]*)"/m.exec(section);
-    const issuerMatch = /^\s*issuer\s*=\s*"([^"]*)"/m.exec(section);
-    if (codeMatch && issuerMatch) {
-      currencies[codeMatch[1]] = issuerMatch[1];
-    }
-  }
-  return currencies;
+const currencyRegex = /\[\[CURRENCIES\]\][\s\S]*?code\s*=\s*"([^"]+)"[\s\S]*?issuer\s*=\s*"([^"]+)"/g;
+let match;
+while ((match = currencyRegex.exec(toml)) !== null) {
+  currencies[match[1]] = match[2];
 }
 
-export async function discoverAnchor(anchorDomain: string): Promise<AnchorConfig> {
-  const url = `${anchorDomain}/.well-known/stellar.toml`;
-  console.log(`  Fetching ${url}`);
-
-  const { data: toml } = await axios.get<string>(url, { responseType: 'text' });
-
-  const webAuthEndpoint = extractTomlString(toml, 'WEB_AUTH_ENDPOINT');
-  const transferServerSep24 = extractTomlString(toml, 'TRANSFER_SERVER_SEP0024');
-  const networkPassphrase = extractTomlString(toml, 'NETWORK_PASSPHRASE');
-
-  if (!webAuthEndpoint) throw new Error('WEB_AUTH_ENDPOINT not found in stellar.toml');
-  if (!transferServerSep24) throw new Error('TRANSFER_SERVER_SEP0024 not found in stellar.toml');
-  if (!networkPassphrase) throw new Error('NETWORK_PASSPHRASE not found in stellar.toml');
-
-  return { webAuthEndpoint, transferServerSep24, networkPassphrase, currencies: extractCurrencies(toml) };
+return { webAuthEndpoint, transferServerSep24, networkPassphrase, currencies };
 }
