@@ -7,12 +7,13 @@
   },
   "dependencies": {
     "@stellar/stellar-sdk": "^13.0.0",
-    "axios": "^1.7.0",
-    "anchorflow-sdk": "file:./anchorflow-sdk-0.1.0.tgz"
-},
+    "anchorflow-sdk": "file:./anchorflow-sdk-0.1.0.tgz",
+    "axios": "^1.7.0"
+  },
   "devDependencies": {
-    "@types/node": "^22.0.0",
+    "@types/node": "^22.19.19",
+    "ts-node": "^10.9.2",
     "tsx": "^4.19.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.9.3"
   }
 }
