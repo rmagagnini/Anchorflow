@@ -1,89 +1,77 @@
+import * as dotenv from 'dotenv';
 import { Keypair } from '@stellar/stellar-sdk';
-import axios from 'axios';
-import { execSync } from 'child_process';
-
-import { discoverAnchor } from './steps/01-discover';
-import { authenticate } from './steps/02-auth';
+import { AnchorFlow } from 'anchorflow-sdk';
 import { ensureTrustline } from './steps/00-trustline';
+import { authenticate } from './steps/02-auth';
 import { initiateDeposit } from './steps/03-deposit';
 import { pollTransaction } from './steps/04-poll';
+import * as fs from 'fs';
 
-const ANCHOR_DOMAIN = 'https://testanchor.stellar.org';
-const ASSET_CODE = process.env.ASSET_CODE ?? 'USDC';
+dotenv.config();
 
-async function fundWithFriendbot(publicKey: string): Promise<void> {
-  console.log('  Requesting funds from Friendbot...');
-  await axios.get(`https://friendbot.stellar.org?addr=${publicKey}`);
-  console.log('  Account funded on testnet.');
-}
+const ANCHOR_DOMAIN  = process.env['ANCHOR_DOMAIN']  ?? 'testanchor.stellar.org';
+const ASSET_CODE     = process.env['ASSET_CODE']     ?? 'SRT';
+const ASSET_ISSUER   = process.env['ASSET_ISSUER']   ?? '';
+const STELLAR_SECRET = process.env['STELLAR_SECRET_KEY'] ?? '';
 
 async function main(): Promise<void> {
-  const secretKey = process.env.STELLAR_SECRET_KEY;
-  const keypair = secretKey ? Keypair.fromSecret(secretKey) : Keypair.random();
+  console.log('\n╔══════════════════════════════════════════════╗');
+  console.log('║   AnchorFlow SDK — First Transaction         ║');
+  console.log('╚══════════════════════════════════════════════╝\n');
 
-  console.log('\n╔══════════════════════════════════════════╗');
-  console.log('║   AnchorFlow — First Transaction PoC    ║');
-  console.log('╚══════════════════════════════════════════╝\n');
+  const keypair = Keypair.fromSecret(STELLAR_SECRET);
+  const sdk = new AnchorFlow({ network: 'testnet' });
+
   console.log(`Anchor  : ${ANCHOR_DOMAIN}`);
   console.log(`Asset   : ${ASSET_CODE}`);
-  console.log(`Account : ${keypair.publicKey()}`);
-
-  if (!secretKey) {
-    console.log(`Secret  : ${keypair.secret()}  ← save this to reuse the account\n`);
-    await fundWithFriendbot(keypair.publicKey());
-  }
+  console.log(`Account : ${keypair.publicKey()}\n`);
 
   // Step 1 — SEP-1
-  console.log('\n[1/5] SEP-1 — Discovering anchor...');
-  const config = await discoverAnchor(ANCHOR_DOMAIN);
-  console.log(`  auth endpoint   : ${config.webAuthEndpoint}`);
-  console.log(`  transfer server : ${config.transferServerSep24}`);
-  console.log(`  network         : ${config.networkPassphrase}`);
-  const assetIssuer = config.currencies[ASSET_CODE];
-  if (assetIssuer) console.log(`  ${ASSET_CODE} issuer    : ${assetIssuer}`);
+  console.log('[1/5] SEP-1 — Discovering anchor...');
+  const info = await sdk.getAnchorInfo(ANCHOR_DOMAIN) as any;
+  const webAuthEndpoint  = info.toml?.WEB_AUTH_ENDPOINT ?? '';
+  const sep24Endpoint    = info.toml?.TRANSFER_SERVER_SEP0024 ?? '';
+  const networkPassphrase = info.toml?.NETWORK_PASSPHRASE ?? 'Test SDF Network ; September 2015';
+  console.log(`  Auth endpoint   : ${webAuthEndpoint}`);
+  console.log(`  SEP-24 server   : ${sep24Endpoint}`);
+  console.log(`  Protocols       : SEP-${Object.entries(info.capabilities).filter(([,v]) => v === true).map(([k]) => k.replace('sep','')).join(', SEP-')}`);
 
-  // Step 2 — SEP-10
-  console.log('\n[2/5] SEP-10 — Authenticating...');
-  const token = await authenticate(config.webAuthEndpoint, config.networkPassphrase, keypair);
-  console.log(`  JWT obtained    : ${token.slice(0, 32)}...`);
+  // Step 2 — Trustline
+  console.log('\n[2/5] Trustline — Ensuring trustline exists...');
+  await ensureTrustline(keypair, networkPassphrase, ASSET_CODE, ASSET_ISSUER);
 
-  // Step 3 — Trustline
-  if (assetIssuer) {
-    console.log(`\n[3/5] Trustline — Ensuring ${ASSET_CODE} trustline on account...`);
-    await ensureTrustline(keypair, config.networkPassphrase, ASSET_CODE, assetIssuer);
-  }
+  // Step 3 — SEP-10
+  console.log('\n[3/5] SEP-10 — Authenticating...');
+  const token = await authenticate(webAuthEndpoint, networkPassphrase, keypair);
+  console.log(`  JWT obtained    : ${token.slice(0, 40)}...`);
+  fs.writeFileSync('.auth-token', token);
 
-  // Step 4 — SEP-24
-  console.log(`\n[4/5] SEP-24 — Initiating ${ASSET_CODE} deposit...`);
-  const deposit = await initiateDeposit(
-    config.transferServerSep24,
-    token,
-    keypair.publicKey(),
-    ASSET_CODE,
-    assetIssuer,
-  );
+  // Step 4 — SEP-24 Deposit
+  console.log('\n[4/5] SEP-24 — Initiating deposit...');
+  const deposit = await initiateDeposit(sep24Endpoint, token, keypair.publicKey(), ASSET_CODE, ASSET_ISSUER);
   console.log(`  Transaction ID  : ${deposit.id}`);
-  console.log(`  Interactive URL : ${deposit.url}`);
+  console.log(`  Deposit URL     : ${deposit.url}`);
+  fs.writeFileSync('.transaction-id', deposit.id);
 
-  console.log('\n>>> Opening deposit form in browser...');
-  console.log(`>>> If it does not open automatically, visit:\n>>> ${deposit.url}\n`);
-  try {
-    execSync(`open "${deposit.url}"`);
-  } catch {
-    // User can open the URL manually
-  }
+  console.log('\n>>> Abra a URL acima no navegador e complete o formulário.');
+  console.log('>>> Pressione Enter quando estiver pronto...\n');
+  await new Promise(resolve => process.stdin.once('data', resolve));
 
-  // Step 4 — Polling
-  console.log('[5/5] Polling transaction status (Ctrl+C to stop)...');
-  console.log('\n>>> COPIE A URL ACIMA E ABRA NO NAVEGADOR <<<');
-console.log('>>> Pressione Enter quando estiver pronto...');
-await new Promise(resolve => process.stdin.once('data', resolve));
-  const result = await pollTransaction(config.transferServerSep24, token, deposit.id);
+  // Step 5 — Polling
+  console.log('[5/5] Polling — Monitoring transaction...');
+  const result = await pollTransaction(sep24Endpoint, token, deposit.id);
 
-  console.log(`\nFinal status: ${result.status}`);
+  console.log('\n╔══════════════════════════════════════════════╗');
+  console.log('║   Transaction Complete!                      ║');
+  console.log('╚══════════════════════════════════════════════╝');
+  console.log(`  Status     : ${result.status}`);
+  if (result.amount_in)  console.log(`  Amount In  : ${result.amount_in} ${ASSET_CODE}`);
+  if (result.amount_out) console.log(`  Amount Out : ${result.amount_out} ${ASSET_CODE}`);
+  if (result.stellar_transaction_id) console.log(`  Stellar TX : ${result.stellar_transaction_id}`);
+  console.log('\nDone.');
 }
 
-main().catch(err => {
-  console.error('\nError:', (err as Error).message ?? err);
+main().catch((err: unknown) => {
+  console.error('\nError:', err instanceof Error ? err.message : err);
   process.exit(1);
 });
