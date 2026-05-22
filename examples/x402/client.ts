@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv';
 import { Keypair } from '@stellar/stellar-sdk';
 import { wrapFetchWithPayment, x402Client } from '@x402/fetch';
-import { ExactStellarScheme } from '@x402/stellar/exact/client';
+import { createEd25519Signer, ExactStellarScheme } from '@x402/stellar';
 
 dotenv.config();
 
@@ -21,11 +21,17 @@ async function main(): Promise<void> {
   console.log('  Fazendo requisição ao endpoint protegido...\n');
 
   try {
+    const signer = createEd25519Signer(keypair.secret(), 'stellar:testnet');
+
+    const stellarScheme = new (require('@x402/stellar/exact/client').ExactStellarScheme)({
+      signer,
+    });
+
     const client = x402Client.fromConfig({
       schemes: [
         {
           network: 'stellar:testnet',
-          client: new ExactStellarScheme({ secretKey: keypair.secret() }),
+          client: stellarScheme,
         },
       ],
     });
@@ -34,7 +40,7 @@ async function main(): Promise<void> {
     const response = await fetchWithPayment(`${SERVER_URL}${ROUTE_PATH}`);
     const data = await response.json();
 
-    console.log('\n  ✅ Pagamento efetuado e conteúdo recebido!');
+    console.log('\n  ✅ Pagamento x402 efetuado com sucesso!');
     console.log('\n  Dados recebidos:');
     console.log(JSON.stringify(data, null, 2));
 
