@@ -14,12 +14,19 @@
   },
   "dependencies": {
     "@stellar/stellar-sdk": "^12.3.0",
-    "anchorflow-sdk": "^0.1.0",
+    "@x402/core": "^2.12.0",
+    "@x402/express": "^2.12.0",
+    "@x402/fetch": "^2.12.0",
+    "@x402/stellar": "^2.12.0",
+    "anchorflow-sdk": "file:../anchorflow-sdk/anchorflow-sdk-0.1.0.tgz",
     "axios": "^1.7.7",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "express": "^5.2.1",
+    "node-fetch": "^3.3.2"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/express": "^5.0.6",
     "@types/node": "^22.7.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3",
