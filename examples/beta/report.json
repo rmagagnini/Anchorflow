@@ -1,0 +1,83 @@
+{
+  "timestamp": "2026-05-22T18:59:44.734Z",
+  "summary": {
+    "total": 6,
+    "ok": 6,
+    "errors": 0,
+    "errorRate": "0.0%"
+  },
+  "results": [
+    {
+      "anchor": "SDF Testnet",
+      "domain": "testanchor.stellar.org",
+      "status": "ok",
+      "sep1": true,
+      "sep6": true,
+      "sep10": true,
+      "sep12": true,
+      "sep24": true,
+      "sep31": true,
+      "timestamp": "2026-05-22T18:59:41.692Z"
+    },
+    {
+      "anchor": "CLPX (Chile)",
+      "domain": "clpx.finance",
+      "status": "ok",
+      "sep1": true,
+      "sep6": true,
+      "sep10": true,
+      "sep12": true,
+      "sep24": true,
+      "sep31": true,
+      "timestamp": "2026-05-22T18:59:42.250Z"
+    },
+    {
+      "anchor": "Anclap (Brasil)",
+      "domain": "anclap.com",
+      "status": "ok",
+      "sep1": true,
+      "sep6": true,
+      "sep10": true,
+      "sep12": true,
+      "sep24": true,
+      "sep31": false,
+      "timestamp": "2026-05-22T18:59:42.941Z"
+    },
+    {
+      "anchor": "MoneyGram",
+      "domain": "stellar.moneygram.com",
+      "status": "ok",
+      "sep1": true,
+      "sep6": false,
+      "sep10": true,
+      "sep12": false,
+      "sep24": true,
+      "sep31": false,
+      "timestamp": "2026-05-22T18:59:43.412Z"
+    },
+    {
+      "anchor": "Cowrie (NG)",
+      "domain": "cowrie.exchange",
+      "status": "ok",
+      "sep1": true,
+      "sep6": true,
+      "sep10": true,
+      "sep12": true,
+      "sep24": false,
+      "sep31": true,
+      "timestamp": "2026-05-22T18:59:43.500Z"
+    },
+    {
+      "anchor": "Stellarport",
+      "domain": "stellarport.io",
+      "status": "ok",
+      "sep1": true,
+      "sep6": true,
+      "sep10": true,
+      "sep12": false,
+      "sep24": false,
+      "sep31": false,
+      "timestamp": "2026-05-22T18:59:44.127Z"
+    }
+  ]
+}
