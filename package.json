@@ -6,6 +6,8 @@
   "scripts": {
     "example:first-transaction": "ts-node examples/first-transaction/index.ts",
     "example:multi-anchor": "ts-node examples/multi-anchor/index.ts",
+    "example:kyc-survey": "ts-node examples/kyc-survey/index.ts",
+    "example:beta-monitor": "ts-node examples/beta/monitor.ts",
     "step:00": "ts-node examples/first-transaction/steps/00-trustline.runner.ts",
     "step:01": "ts-node examples/first-transaction/steps/01-discover.ts",
     "step:02": "ts-node examples/first-transaction/steps/02-auth.runner.ts",
@@ -13,23 +15,21 @@
     "step:04": "ts-node examples/first-transaction/steps/04-poll.runner.ts"
   },
   "dependencies": {
+    "anchorflow-sdk": "^1.0.1",
     "@stellar/stellar-sdk": "^12.3.0",
     "@x402/core": "^2.12.0",
     "@x402/express": "^2.12.0",
     "@x402/fetch": "^2.12.0",
     "@x402/stellar": "^2.12.0",
-    "anchorflow-sdk": "file:../anchorflow-sdk/anchorflow-sdk-0.1.0.tgz",
     "axios": "^1.7.7",
     "dotenv": "^16.4.5",
-    "express": "^5.2.1",
+    "express": "^4.21.0",
     "node-fetch": "^3.3.2"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
-    "@types/express": "^5.0.6",
+    "@types/express": "^4.17.21",
     "@types/node": "^22.7.5",
     "ts-node": "^10.9.2",
-    "typescript": "^5.6.3",
-    "typescript-eslint": "^8.59.4"
+    "typescript": "^5.6.3"
   }
 }
